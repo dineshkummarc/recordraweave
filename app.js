@@ -1,5 +1,5 @@
 (function () {
-	var context, app;
+	var context, app, width, height;
 
 	function createCanvas(width, height, node) {
 		var canvas = document.createElement('canvas');
@@ -31,7 +31,9 @@
 
 	function update() {}
 
-	context = createCanvas(800, 600, document.body);
+	width = 800;
+	height = 600;
+	context = createCanvas(width, height, document.body);
 
 	app = (function () {
 		var mouse, path;
@@ -75,16 +77,28 @@
 		};
 
 		path.deserialize = function (input) {
-			return input.match(/[\d\w]{6}/g).map(function (n) {
-				return ({
+			var matches = input.match(/[0-9a-f]{6}/g);
+
+			if (!matches) {
+				return false;
+			}
+
+			while (path.length) {
+				path.pop();
+			}
+
+			matches.forEach(function (n) {
+				path.push({
 					x: parseInt(n.slice(0, 3), 16),
 					y: parseInt(n.slice(3), 16)
-				})
+				});
 			});
-		}
+		};
 
 		function render(ctx) {
 			var j;
+
+			ctx.clearRect(0, 0, width, height);
 
 			ctx.strokeStyle = '#000';
 
