@@ -34,7 +34,7 @@
 	context = createCanvas(800, 600, document.body);
 
 	app = (function () {
-		var mouse;
+		var mouse, path;
 
 		mouse = {
 			x: -1,
@@ -42,11 +42,72 @@
 			isDown: false
 		};
 
-		return {
+		path = [];
+
+		path.addPoint = function (x, y) {
+			var tail;
+
+			if (path.length) {
+				tail = path.slice(-1);
+				if (x === tail.x && y === y) {
+					return false;
+				}
+			}
+
+			return path.push({ x: +x, y: +y });
+		};
+
+		path.serialize = function () {
+			return path.map(function (point) {
+				return [point.x, point.y].join(',');
+			})
+			.join(',')
+			.split(',')
+			.map(function (n) {
+				var convert = (+n).toString(16);
+				while (convert.length < 3) {
+					convert = '0' + convert;
+				}
+
+				return convert;
+			})
+			.join('');
+		};
+
+		path.deserialize = function (input) {
+			return input.match(/[\d\w]{6}/g).map(function (n) {
+				return ({
+					x: parseInt(n.slice(0, 3), 16),
+					y: parseInt(n.slice(3), 16)
+				})
+			});
+		}
+
+		function render(ctx) {
+			var j;
+
+			ctx.strokeStyle = '#000';
+
+			if (path.length) {
+				ctx.beginPath();
+				ctx.moveTo(path[0].x, path[0].y);
+
+				for (j = 1; j < path.length; j += 1) {
+					ctx.lineTo(path[j].x, path[j].y);
+				}
+
+				ctx.stroke();
+			}
+		}
+
+		return ({
 			mouseMove: function (x, y) {
 				mouse.x = x;
 				mouse.y = y;
-				console.log(mouse.x, mouse.y, mouse.isDown);
+
+				if (mouse.isDown) {
+					path.addPoint(x, y);
+				}
 			},
 
 			mouseDown: function (x, y) {
@@ -59,7 +120,11 @@
 				mouse.x = x;
 				mouse.y = y;
 				mouse.isDown = false;
-			}
-		};
+
+				render(context);
+			},
+
+			render: render
+		});
 	}());
 }());
