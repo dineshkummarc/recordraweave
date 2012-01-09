@@ -81,7 +81,7 @@
 			);
 
 			console.log(distance);
-			if (distance < 4) {
+			if (distance < 8) {
 				return false;
 			}
 		}
@@ -122,15 +122,24 @@
 	};
 
 	Path.prototype.render = function (ctx, length) {
-		var j, len = length || this.path.length;
+		var j, xc, yc, len = length || this.path.length;
 
-		if (this.path.length) {
+		if (this.path.length > 2 && len > 2) {
 			ctx.beginPath();
 			ctx.moveTo(this.path[0].x, this.path[0].y);
 
-			for (j = 1; j < len; j += 1) {
-				ctx.lineTo(this.path[j].x, this.path[j].y);
+			for (j = 1; j < len - 2; j += 1) {
+				xc = (this.path[j].x + this.path[j + 1].x) / 2;
+				yc = (this.path[j].y + this.path[j + 1].y) / 2;
+				ctx.quadraticCurveTo(this.path[j].x, this.path[j].y, xc, yc);
 			}
+
+			ctx.quadraticCurveTo(
+				this.path[j].x,
+				this.path[j].y,
+				this.path[j + 1].x,
+				this.path[j + 1].y
+			);
 
 			ctx.stroke();
 		}
@@ -149,7 +158,7 @@
 
 		function update(delta) {
 			if (path.path.length) {
-				len = (len + .25 * delta) % path.path.length;
+				len = (len + .15 * delta) % path.path.length;
 			}
 		}
 
