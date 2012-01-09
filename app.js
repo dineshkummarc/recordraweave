@@ -1,5 +1,15 @@
 (function () {
-	var context, app, width, height;
+	var context, app, width, height, lastUpdate;
+
+	repaint = window.requestAnimationFrame ||
+		window.webkitRequestAnimationFrame ||
+		window.mozRequestAnimationFrame ||
+		window.oRequestAnimationFrame ||
+		function (callback) {
+			window.setTimeout(function () {
+				callback(Date.now());
+			}, 20);
+		};
 
 	function createCanvas(width, height, node) {
 		var canvas = document.createElement('canvas');
@@ -29,11 +39,24 @@
 		return canvas.getContext('2d');
 	}
 
-	function update() {}
+	function update(time, force) {
+		repaint(update);
+		var delta = time - lastUpdate;
+		if (delta >= 16 || force) { // Cap at 60 FPS
+			lastUpdate = time;
 
-	width = 800;
-	height = 600;
-	context = createCanvas(width, height, document.body);
+			app.update(delta);
+			app.render(context);
+		}
+	}
+
+	function init() {
+		width = 800;
+		height = 600;
+		context = createCanvas(width, height, document.body);
+		lastUpdate = Date.now();
+		update(lastUpdate);
+	}
 
 	function Path(input) {
 		if (typeof input === 'undefined') {
@@ -80,7 +103,7 @@
 			return false;
 		}
 
-		this.path = matches.map(function (n) {
+		return this.path = matches.map(function (n) {
 			return ({
 				x: parseInt(n.slice(0, 3), 16),
 				y: parseInt(n.slice(3), 16)
@@ -88,12 +111,14 @@
 		});
 	};
 
-	Path.prototype.render = function (ctx) {
+	Path.prototype.render = function (ctx, length) {
+		var j, len = length || this.path.length;
+
 		if (this.path.length) {
 			ctx.beginPath();
 			ctx.moveTo(this.path[0].x, this.path[0].y);
 
-			for (j = 1; j < this.path.length; j += 1) {
+			for (j = 1; j < len; j += 1) {
 				ctx.lineTo(this.path[j].x, this.path[j].y);
 			}
 
@@ -102,7 +127,7 @@
 	};
 
 	app = (function () {
-		var mouse, path;
+		var mouse, path, len;
 
 		mouse = {
 			x: -1,
@@ -112,13 +137,16 @@
 
 		path = new Path();
 
+		function update(delta) {
+			if (path.path.length) {
+				len = (len + .25 * delta) % path.path.length;
+			}
+		}
+
 		function render(ctx) {
-			var j;
-
 			ctx.clearRect(0, 0, width, height);
-
 			ctx.strokeStyle = '#000';
-			path.render(ctx);
+			path.render(ctx, mouse.isDown && path.path.length || Math.floor(len));
 		}
 
 		return ({
@@ -141,11 +169,15 @@
 				mouse.x = x;
 				mouse.y = y;
 				mouse.isDown = false;
+				len = 0;
 
 				render(context);
 			},
 
-			render: render
+			render: render,
+			update: update
 		});
 	}());
+
+	init();
 }());
