@@ -67,11 +67,21 @@
 	}
 
 	Path.prototype.addPoint = function (x, y) {
-		var tail;
+		var tail, distance;
 
 		if (this.path.length) {
-			tail = this.path.slice(-1);
+			tail = this.path.slice(-1)[0];
 			if (x === tail.x && y === tail.y) {
+				return false;
+			}
+
+			distance = Math.sqrt(
+				Math.pow(x - tail.x, 2),
+				Math.pow(y - tail.y, 2)				
+			);
+
+			console.log(distance);
+			if (distance < 4) {
 				return false;
 			}
 		}
@@ -145,6 +155,9 @@
 
 		function render(ctx) {
 			ctx.clearRect(0, 0, width, height);
+			ctx.lineWidth = 2.0;
+			ctx.lineCap = 'round';
+			ctx.lineJoin = 'round';
 			ctx.strokeStyle = '#000';
 			path.render(ctx, mouse.isDown && path.path.length || Math.floor(len));
 		}
