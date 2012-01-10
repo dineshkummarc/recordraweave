@@ -166,8 +166,8 @@
 	app = (function () {
 		var mouse, path, len, states = {}, state;
 
-		state = 'default';
-		states.default = {
+		state = 'record';
+		states.record = {
 			update: function (delta) {
 				if (path.path.length) {
 					len = (len + .15 * delta) % path.path.length;
@@ -178,10 +178,6 @@
 				ctx.lineWidth = 2.0;
 				ctx.strokeStyle = '#000';
 				ctx.fillStyle = '#000';
-				ctx.shadowColor = '#ababab';
-				ctx.shadowBlur = 10;
-				ctx.shadowOffsetX = 2;
-				ctx.shadowOffsetY = 2;
 
 				if (!mouse.isDown) {
 					ctx.clearRect(0, 0, width, height);
@@ -189,6 +185,22 @@
 				} else if (mouse.x >= 0 && mouse.y >= 0) {
 					ctx.fillRect(mouse.x, mouse.y, 2, 2);
 				}
+			}
+		};
+
+		states.gallery = {
+			update: function () {},
+
+			render: function (ctx) {
+				ctx.clearRect(0, 0, width, height);
+				ctx.fillStyle = '#000';
+				ctx.font = '26px calibri, helvetica, serif';
+				ctx.textAlign = 'center';
+				ctx.fillText(
+					'Draw a gallery of saved drawings here',
+					width / 2,
+					height / 2
+				);
 			}
 		};
 
@@ -205,7 +217,7 @@
 				mouse.x = x;
 				mouse.y = y;
 
-				if (mouse.isDown) {
+				if (mouse.isDown && state === 'record') {
 					path.addPoint(x, y);
 				}
 			},
@@ -226,7 +238,7 @@
 			},
 
 			record: function (event) {
-				console.log('record!');
+				state = 'record';
 			},
 
 			save: function (event) {
@@ -234,7 +246,7 @@
 			},
 
 			showGallery: function (event) {
-				console.log('showGallery!');
+				state = 'gallery';
 			},
 
 			render: function (ctx) {
