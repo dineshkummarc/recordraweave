@@ -1,4 +1,4 @@
-(function () {
+(function (window, document, $) {
 	var context, app, width, height, lastUpdate;
 
 	repaint = window.requestAnimationFrame ||
@@ -11,37 +11,6 @@
 			}, 20);
 		};
 
-	function createCanvas(width, height, node) {
-		var canvas = document.createElement('canvas');
-		canvas.width = width;
-		canvas.height = height;
-
-		if (node && node.appendChild) {
-			node.appendChild(canvas);
-		}
-
-		['mouseMove', 'mouseDown', 'mouseUp'].forEach(function (event) {
-			canvas.addEventListener(event.toLowerCase(), function (e) {
-				var x, y;
-				x = e.offsetX;
-				y = e.offsetY;
-
-				if (typeof x === 'undefined' || typeof y === 'undefined') {
-					x = e.pageX - canvas.offsetLeft;
-					y = e.pageY - canvas.offsetTop;
-				}
-
-				app[event].apply(app, [x, y, e]);
-				update();
-
-				e.preventDefault();
-				return false;
-			}, false);
-		});
-
-		return canvas.getContext('2d');
-	}
-
 	function update(time, force) {
 		repaint(update);
 		var delta = time - lastUpdate;
@@ -53,10 +22,57 @@
 		}
 	}
 
+	function initEvents() {
+		var canvas = context.canvas;
+
+		$(canvas).bind('mousemove mousedown mouseup', function (event) {
+			var x, y;
+			x = event.offsetX;
+			y = event.offsetY;
+
+			if (typeof x === 'undefined' || typeof y === 'undefined') {
+				x = event.pageX - canvas.offsetLeft;
+				y = event.pageY - canvas.offsetTop;
+			}
+
+			app[event.type].apply(app, [x, y, event]);
+			update();
+
+			event.preventDefault();
+			return false;
+		});
+
+		$('#menu li').click(function (event) {
+			var func, self = $(this);
+
+			if (self.hasClass('selected')) {
+				return;
+			}
+
+			$('#menu li').removeClass('selected');
+			self.addClass('selected');
+
+			func = self.attr('id');
+			if (typeof app[func] === 'function') {
+				return app[func].apply(app, [event]);
+			}
+		});
+	}
+
 	function init() {
+		var canvas;
+
 		width = 800;
 		height = 600;
-		context = createCanvas(width, height, document.body);
+
+		canvas = $('<canvas/>')[0];
+		canvas.width = width;
+		canvas.height = height;
+		$('#canvas').append(canvas);
+		context = canvas.getContext('2d');
+
+		initEvents();
+
 		lastUpdate = Date.now();
 		update(lastUpdate);
 	}
@@ -185,7 +201,7 @@
 		path = new Path();
 
 		return ({
-			mouseMove: function (x, y) {
+			mousemove: function (x, y) {
 				mouse.x = x;
 				mouse.y = y;
 
@@ -194,19 +210,31 @@
 				}
 			},
 
-			mouseDown: function (x, y) {
+			mousedown: function (x, y) {
 				mouse.x = x;
 				mouse.y = y;
 				mouse.isDown = true;
 			},
 
-			mouseUp: function (x, y) {
+			mouseup: function (x, y) {
 				mouse.x = x;
 				mouse.y = y;
 				mouse.isDown = false;
 				len = 0;
 
 				app.render(context);
+			},
+
+			record: function (event) {
+				console.log('record!');
+			},
+
+			save: function (event) {
+				console.log('save!');
+			},
+
+			showGallery: function (event) {
+				console.log('showGallery!');
 			},
 
 			render: function (ctx) {
@@ -220,4 +248,4 @@
 	}());
 
 	init();
-}());
+}(this, this.document, this.jQuery));

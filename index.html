@@ -1,21 +1,18 @@
 <!doctype html>
 <html>
-<head>
-<title>record. draw. weave.</title>
-<style type="text/css">
-body {
-	font: 16px calibri, helvetica, serif;
-}
-canvas {
-	border: 1px #000 solid;
-}
-canvas:active {
-	cursor: crosshair;
-}
-</style>
-</head>
-<body>
-<h1>record. draw. weave.</h1>
-<script type="text/javascript" src="app.js"></script>
-</body>
+  <head>
+    <title>record. draw. weave.</title>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css"/>
+  </head>
+  <body>
+    <h1>record. draw. weave.</h1>
+    <div id="canvas"></div>
+    <ul id="menu">
+      <li id="record" class="selected"><img src="images/record.png"/></li>
+      <li id="save"><img src="images/save.png"/></li>
+      <li id="showGallery"><img src="images/gallery.png"/></li>
+    </ul>
+    <script type="text/javascript" src="app.js"></script>
+  </body>
 </html>
