@@ -1,5 +1,5 @@
 (function (window, document, $) {
-	var context, app, width, height, lastUpdate;
+	var context, app, width, height, lastUpdate, savedPaths;
 
 	repaint = window.requestAnimationFrame ||
 		window.webkitRequestAnimationFrame ||
@@ -19,6 +19,14 @@
 
 			app.update(delta);
 			app.render(context);
+		}
+	}
+
+	function loadSavedPaths() {
+		if (!localStorage.paths) {
+			savedPaths = [];
+		} else {
+			savedPaths = JSON.parse(localStorage.paths);
 		}
 	}
 
@@ -74,6 +82,7 @@
 		context.textAlign = 'center';
 
 		initEvents();
+		loadSavedPaths();
 
 		lastUpdate = Date.now();
 		update(lastUpdate);
@@ -256,6 +265,8 @@
 			},
 
 			save: function (event) {
+				savedPaths.push(path.serialize());
+				localStorage.paths = JSON.stringify(savedPaths);
 				path = new Path();
 				state = 'save';
 			},
