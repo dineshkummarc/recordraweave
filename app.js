@@ -1,5 +1,5 @@
 (function (window, document, $) {
-	var context, app, width, height, lastUpdate, savedPaths;
+	var context, app, width, height, lastUpdate, savedPaths, thumbnails;
 
 	repaint = window.requestAnimationFrame ||
 		window.webkitRequestAnimationFrame ||
@@ -28,6 +28,13 @@
 		} else {
 			savedPaths = JSON.parse(localStorage.paths);
 		}
+
+		thumbnails = [];
+		thumbnails.scale = 1 / 5;
+		savedPaths.forEach(function (path) {
+			var p = new Path(path);
+			thumbnails.push(p.getThumbnail(thumbnails.scale));
+		});
 	}
 
 	function initEvents() {
@@ -174,6 +181,20 @@
 		}
 	};
 
+	Path.prototype.getThumbnail = function (scale) {
+		var canvas, ctx;
+		canvas = $('<canvas/>')[0];
+		ctx = canvas.getContext('2d');
+
+		canvas.width = width * scale;
+		canvas.height = height * scale;
+
+		ctx.scale(scale, scale);
+		this.render(ctx);
+
+		return canvas;
+	};
+
 	app = (function () {
 		var mouse, path, len, states = {}, state;
 
@@ -208,16 +229,18 @@
 		};
 
 		states.save = {
+			success: false,
 			update: function () {},
 
 			render: function (ctx) {
+				var message = 'Your drawing was saved.';
+				if (!states.save.success) {
+					message = 'Your drawing was NOT saved (too small)';
+				}
+
 				ctx.clearRect(0, 0, width, height);
 				ctx.fillStyle = '#000';
-				ctx.fillText(
-					'Your drawing was saved. Maybe.',
-					width / 2,
-					height / 2
-				);
+				ctx.fillText(message, width / 2, height / 2);
 			}
 		};
 
@@ -225,13 +248,29 @@
 			update: function () {},
 
 			render: function (ctx) {
+				var x, y, count, margin, xinc, yinc, thumbnail;
+				count = -1;
+				margin = 10;
+				xinc = thumbnails.scale * width + margin;
+				yinc = thumbnails.scale * height + margin;
+
 				ctx.clearRect(0, 0, width, height);
-				ctx.fillStyle = '#000';
-				ctx.fillText(
-					'Draw a gallery of saved drawings here',
-					width / 2,
-					height / 2
-				);
+				ctx.strokeStyle = '#ababab';
+
+				for (y = margin; count < thumbnails.length; y += yinc) {
+					for (x = margin; x < width - xinc; x += xinc) {
+						count += 1;
+						if (count >= thumbnails.length) {
+							break;
+						}
+
+						thumbnail = thumbnails[count];
+
+						ctx.drawImage(thumbnail, x, y);
+						ctx.strokeRect(x, y, thumbnail.width, thumbnail.height);
+					}
+				}
+
 			}
 		};
 
@@ -265,8 +304,15 @@
 			},
 
 			save: function (event) {
+				if (path.path.length < 3) {
+					states.save.success = false;
+					return;
+				}
+
+				states.save.success = true;
 				savedPaths.push(path.serialize());
 				localStorage.paths = JSON.stringify(savedPaths);
+				thumbnails.push(path.getThumbnail(thumbnails.scale));
 				path = new Path();
 				state = 'save';
 			},
