@@ -70,6 +70,8 @@
 		canvas.height = height;
 		$('#canvas').append(canvas);
 		context = canvas.getContext('2d');
+		context.font = '26px calibri, helvetica, serif';
+		context.textAlign = 'center';
 
 		initEvents();
 
@@ -166,6 +168,14 @@
 	app = (function () {
 		var mouse, path, len, states = {}, state;
 
+		mouse = {
+			x: -1,
+			y: -1,
+			isDown: false
+		};
+
+		path = new Path();
+
 		state = 'record';
 		states.record = {
 			update: function (delta) {
@@ -188,14 +198,26 @@
 			}
 		};
 
+		states.save = {
+			update: function () {},
+
+			render: function (ctx) {
+				ctx.clearRect(0, 0, width, height);
+				ctx.fillStyle = '#000';
+				ctx.fillText(
+					'Your drawing was saved. Maybe.',
+					width / 2,
+					height / 2
+				);
+			}
+		};
+
 		states.gallery = {
 			update: function () {},
 
 			render: function (ctx) {
 				ctx.clearRect(0, 0, width, height);
 				ctx.fillStyle = '#000';
-				ctx.font = '26px calibri, helvetica, serif';
-				ctx.textAlign = 'center';
 				ctx.fillText(
 					'Draw a gallery of saved drawings here',
 					width / 2,
@@ -203,14 +225,6 @@
 				);
 			}
 		};
-
-		mouse = {
-			x: -1,
-			y: -1,
-			isDown: false
-		};
-
-		path = new Path();
 
 		return ({
 			mousemove: function (x, y) {
@@ -242,7 +256,8 @@
 			},
 
 			save: function (event) {
-				console.log('save!');
+				path = new Path();
+				state = 'save';
 			},
 
 			showGallery: function (event) {
