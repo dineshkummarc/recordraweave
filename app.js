@@ -33,6 +33,9 @@
 
 				app[event].apply(app, [x, y, e]);
 				update();
+
+				e.preventDefault();
+				return false;
 			}, false);
 		});
 
@@ -80,8 +83,7 @@
 				Math.pow(y - tail.y, 2)				
 			);
 
-			console.log(distance);
-			if (distance < 8) {
+			if (distance < 3) {
 				return false;
 			}
 		}
@@ -146,7 +148,33 @@
 	};
 
 	app = (function () {
-		var mouse, path, len;
+		var mouse, path, len, states = {}, state;
+
+		state = 'default';
+		states.default = {
+			update: function (delta) {
+				if (path.path.length) {
+					len = (len + .15 * delta) % path.path.length;
+				}
+			},
+
+			render: function (ctx) {
+				ctx.lineWidth = 2.0;
+				ctx.strokeStyle = '#000';
+				ctx.fillStyle = '#000';
+				ctx.shadowColor = '#ababab';
+				ctx.shadowBlur = 10;
+				ctx.shadowOffsetX = 2;
+				ctx.shadowOffsetY = 2;
+
+				if (!mouse.isDown) {
+					ctx.clearRect(0, 0, width, height);
+					path.render(ctx, Math.floor(len));
+				} else if (mouse.x >= 0 && mouse.y >= 0) {
+					ctx.fillRect(mouse.x, mouse.y, 2, 2);
+				}
+			}
+		};
 
 		mouse = {
 			x: -1,
@@ -155,21 +183,6 @@
 		};
 
 		path = new Path();
-
-		function update(delta) {
-			if (path.path.length) {
-				len = (len + .15 * delta) % path.path.length;
-			}
-		}
-
-		function render(ctx) {
-			ctx.clearRect(0, 0, width, height);
-			ctx.lineWidth = 2.0;
-			ctx.lineCap = 'round';
-			ctx.lineJoin = 'round';
-			ctx.strokeStyle = '#000';
-			path.render(ctx, mouse.isDown && path.path.length || Math.floor(len));
-		}
 
 		return ({
 			mouseMove: function (x, y) {
@@ -193,11 +206,16 @@
 				mouse.isDown = false;
 				len = 0;
 
-				render(context);
+				app.render(context);
 			},
 
-			render: render,
-			update: update
+			render: function (ctx) {
+				states[state].render(ctx);
+			},
+
+			update: function (delta) {
+				states[state].update(delta);
+			}
 		});
 	}());
 
